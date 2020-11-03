@@ -662,7 +662,7 @@ func (client *Client) OrderCreate(identity string, order contract.OrderRequest) 
 	return res, parseResponseJSON(resp, &res)
 }
 
-// OrdersGet returns a single order istance given it's ID.
+// OrderGet returns a single order istance given it's ID.
 func (client *Client) OrderGet(identity string, id uint64) (contract.OrderResponse, error) {
 	path := fmt.Sprintf("identity/%s/pilvytis/order/%d", identity, id)
 	resp, err := client.http.Get(path, nil)
@@ -675,7 +675,7 @@ func (client *Client) OrderGet(identity string, id uint64) (contract.OrderRespon
 	return res, parseResponseJSON(resp, &res)
 }
 
-// OrdersGetAll returns all order istances for a given identity
+// OrderGetAll returns all order istances for a given identity
 func (client *Client) OrderGetAll(identity string) ([]contract.OrderResponse, error) {
 	path := fmt.Sprintf("identity/%s/pilvytis/order", identity)
 	resp, err := client.http.Get(path, nil)

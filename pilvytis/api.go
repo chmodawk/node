@@ -100,7 +100,7 @@ func (a *API) GetPaymentOrder(i identity.Identity, oid uint64) (OrderResp, error
 	return resp, a.req.DoRequestAndParseResponse(req, &resp)
 }
 
-// GetPaymentOrder returns a list of payment orders from the API service made by a given identity.
+// GetPaymentOrders returns a list of payment orders from the API service made by a given identity.
 func (a *API) GetPaymentOrders(i identity.Identity) ([]OrderResp, error) {
 	req, err := requests.NewSignedGetRequest(a.dsn, orderEndpoint, a.signer(i))
 	if err != nil {
