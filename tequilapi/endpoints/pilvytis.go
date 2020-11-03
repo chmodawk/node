@@ -48,6 +48,31 @@ func NewPilvytisEndpoint(pil api) *pilvytisEndpoint {
 }
 
 // CreatePaymentOrder creates a new payment order.
+//
+// swagger:operation POST /identity/{iden}/pilvytis/order Order createOrder
+// ---
+// summary: Create order
+// description: Takes the given data and tries to create a new payment order in the pilvytis service.
+// parameters:
+// - name: iden
+//   in: path
+//   description: Identity for which to create an order
+//   type: string
+//   required: true
+// - in: body
+//   name: body
+//   description: Required data to create a new order
+//   schema:
+//     $ref: "#/definitions/OrderRequest"
+// responses:
+//   200:
+//     description: Order object
+//     schema:
+//       "$ref": "#/definitions/OrderResponse"
+//   500:
+//     description: Internal server error
+//     schema:
+//       "$ref": "#/definitions/ErrorMessageDTO"
 func (e *pilvytisEndpoint) CreatePaymentOrder(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	var req contract.OrderRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -72,6 +97,31 @@ func (e *pilvytisEndpoint) CreatePaymentOrder(w http.ResponseWriter, r *http.Req
 }
 
 // GetPaymentOrder returns a payment order which maches a given ID and identity.
+//
+// swagger:operation GET /identity/{iden}/pilvytis/order/{id} Order getOrder
+// ---
+// summary: Get order
+// description: Gets an order for a given identity and order id combo from the pilvytis service
+// parameters:
+// - name: iden
+//   in: path
+//   description: Identity for which to get an order
+//   type: string
+//   required: true
+// - name: id
+//   in: path
+//   description: Order id
+//   type: integer
+//   required: true
+// responses:
+//   200:
+//     description: Order object
+//     schema:
+//       "$ref": "#/definitions/OrderResponse"
+//   500:
+//     description: Internal server error
+//     schema:
+//       "$ref": "#/definitions/ErrorMessageDTO"
 func (e *pilvytisEndpoint) GetPaymentOrder(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	id := params.ByName("id")
 	if id == "" {
@@ -97,7 +147,29 @@ func (e *pilvytisEndpoint) GetPaymentOrder(w http.ResponseWriter, r *http.Reques
 	utils.WriteAsJSON(contract.NewOrderResponse(resp), w)
 }
 
-// GetPaymentOrders returns all payment orders for a given identity
+// GetPaymentOrder returns a payment order which maches a given ID and identity.
+//
+// swagger:operation GET /identity/{iden}/pilvytis/order Order getOrders
+// ---
+// summary: Get all orders for identity
+// description: Gets all orders for a given identity from the pilvytis service
+// parameters:
+// - name: iden
+//   in: path
+//   description: Identity for which to get orders
+//   type: string
+//   required: true
+// responses:
+//   200:
+//     description: Array of order objects
+//     schema:
+//       type: "array"
+//       items:
+//         "$ref": "#/definitions/OrderResponse"
+//   500:
+//     description: Internal server error
+//     schema:
+//       "$ref": "#/definitions/ErrorMessageDTO"
 func (e *pilvytisEndpoint) GetPaymentOrders(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	var identity identity.Identity
 	identity.Address = params.ByName("iden")

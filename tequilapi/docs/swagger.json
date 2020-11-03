@@ -1045,6 +1045,121 @@
         }
       }
     },
+    "/identity/{iden}/pilvytis/order": {
+      "get": {
+        "description": "Gets all orders for a given identity from the pilvytis service",
+        "tags": [
+          "Order"
+        ],
+        "summary": "Get all orders for identity",
+        "operationId": "getOrders",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Identity for which to get orders",
+            "name": "iden",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of order objects",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/OrderResponse"
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageDTO"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Takes the given data and tries to create a new payment order in the pilvytis service.",
+        "tags": [
+          "Order"
+        ],
+        "summary": "Create order",
+        "operationId": "createOrder",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Identity for which to create an order",
+            "name": "iden",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Required data to create a new order",
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/OrderRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order object",
+            "schema": {
+              "$ref": "#/definitions/OrderResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageDTO"
+            }
+          }
+        }
+      }
+    },
+    "/identity/{iden}/pilvytis/order/{id}": {
+      "get": {
+        "description": "Gets an order for a given identity and order id combo from the pilvytis service",
+        "tags": [
+          "Order"
+        ],
+        "summary": "Get order",
+        "operationId": "getOrder",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Identity for which to get an order",
+            "name": "iden",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "description": "Order id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order object",
+            "schema": {
+              "$ref": "#/definitions/OrderResponse"
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/ErrorMessageDTO"
+            }
+          }
+        }
+      }
+    },
     "/location": {
       "get": {
         "description": "Returns original locations",
@@ -2655,6 +2770,95 @@
         "status": {
           "type": "string",
           "x-go-name": "Status"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "OrderRequest": {
+      "description": "OrderRequest holds order request details",
+      "type": "object",
+      "properties": {
+        "lightning_network": {
+          "type": "boolean",
+          "x-go-name": "LightningNetwork",
+          "example": false
+        },
+        "price_amount": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "PriceAmount",
+          "example": 3.14
+        },
+        "price_currency": {
+          "type": "string",
+          "x-go-name": "PriceCurrency",
+          "example": "EUR"
+        },
+        "receive_currency": {
+          "type": "string",
+          "x-go-name": "ReceiveCurrency",
+          "example": "EUR"
+        }
+      },
+      "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
+    },
+    "OrderResponse": {
+      "description": "OrderResponse holds order request details",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "ID",
+          "example": 1
+        },
+        "identity": {
+          "type": "string",
+          "x-go-name": "Identity",
+          "example": "0x0000000000000000000000000000000000000002"
+        },
+        "pay_amount": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "PayAmount",
+          "example": 1.1
+        },
+        "pay_currency": {
+          "type": "string",
+          "x-go-name": "PayCurrency",
+          "example": "BTC"
+        },
+        "payment_address": {
+          "type": "string",
+          "x-go-name": "PaymentAddress",
+          "example": "0x0000000000000000000000000000000000000002"
+        },
+        "price_amount": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "PriceAmount",
+          "example": 1.1
+        },
+        "price_currency": {
+          "type": "string",
+          "x-go-name": "PriceCurrency",
+          "example": "BTC"
+        },
+        "receive_amount": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "ReceiveAmount",
+          "example": 1.1
+        },
+        "receive_currency": {
+          "type": "string",
+          "x-go-name": "ReceiveCurrency",
+          "example": "BTC"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status",
+          "example": "pending"
         }
       },
       "x-go-package": "github.com/mysteriumnetwork/node/tequilapi/contract"
