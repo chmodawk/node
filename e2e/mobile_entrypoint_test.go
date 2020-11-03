@@ -50,6 +50,7 @@ func TestMobileNodeConsumer(t *testing.T) {
 		HermesEndpointAddress:           "http://hermes:8889/api/v1",
 		HermesID:                        hermesID,
 		MystSCAddress:                   mystAddress,
+		PilvytisAddress:                 "http://pilvitys:8002/api/v1",
 	}
 
 	node, err := mysterium.NewNode(dir, options)

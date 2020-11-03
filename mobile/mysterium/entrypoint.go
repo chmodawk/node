@@ -25,6 +25,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/mysteriumnetwork/node/core/connection/connectionstate"
+	"github.com/mysteriumnetwork/node/pilvytis"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 
@@ -69,6 +70,7 @@ type MobileNode struct {
 	hermes                       common.Address
 	feedbackReporter             *feedback.Reporter
 	transactor                   *registry.Transactor
+	pilvytis                     *pilvytis.API
 	identityRegistry             registry.IdentityRegistry
 	identityChannelCalculator    *pingpong.ChannelAddressCalculator
 	consumerBalanceTracker       *pingpong.ConsumerBalanceTracker
@@ -95,6 +97,7 @@ type MobileNodeOptions struct {
 	HermesEndpointAddress           string
 	HermesID                        string
 	MystSCAddress                   string
+	PilvytisAddress                 string
 }
 
 // DefaultNodeOptions returns default options.
@@ -114,6 +117,7 @@ func DefaultNodeOptions() *MobileNodeOptions {
 		TransactorChannelImplementation: metadata.BetanetDefinition.ChannelImplAddress,
 		HermesID:                        metadata.BetanetDefinition.HermesID,
 		MystSCAddress:                   "0xf74a5ca65E4552CfF0f13b116113cCb493c580C5",
+		PilvytisAddress:                 metadata.BetanetDefinition.PilvytisAddress,
 	}
 }
 
@@ -198,8 +202,9 @@ func NewNode(appPath string, options *MobileNodeOptions) (*MobileNode, error) {
 			SettlementTimeout:              time.Hour * 2,
 			MystSCAddress:                  options.MystSCAddress,
 		},
-		Consumer: true,
-		P2PPorts: port.UnspecifiedRange(),
+		Consumer:        true,
+		P2PPorts:        port.UnspecifiedRange(),
+		PilvytisAddress: options.PilvytisAddress,
 	}
 
 	err := di.Bootstrap(nodeOptions)
@@ -221,6 +226,7 @@ func NewNode(appPath string, options *MobileNodeOptions) (*MobileNode, error) {
 		hermes:                       common.HexToAddress(nodeOptions.Hermes.HermesID),
 		feedbackReporter:             di.Reporter,
 		transactor:                   di.Transactor,
+		pilvytis:                     di.PilvytisAPI,
 		identityRegistry:             di.IdentityRegistry,
 		consumerBalanceTracker:       di.ConsumerBalanceTracker,
 		identityChannelCalculator:    di.ChannelAddressCalculator,
@@ -458,6 +464,100 @@ func (mb *MobileNode) GetIdentity(req *GetIdentityRequest) (*GetIdentityResponse
 		ChannelAddress:     channelAddress.Hex(),
 		RegistrationStatus: status.String(),
 	}, nil
+}
+
+// CreatePaymentOrderReq represents payment order request.
+type CreatePaymentOrderReq struct {
+	IdentityAddress  string
+	PriceAmount      float64
+	PriceCurrency    string
+	ReceiveCurrency  string
+	LightningNetwork bool
+}
+
+// PaymentOrderResp represents payment order response.
+type PaymentOrderResp struct {
+	ID       uint64 `json:"id"`
+	Status   string `json:"status"`
+	Identity string `json:"identity"`
+
+	PriceAmount   *float64 `json:"price_amount"`
+	PriceCurrency string   `json:"price_currency"`
+
+	PayAmount      *float64 `json:"pay_amount,omitempty"`
+	PayCurrency    *string  `json:"pay_currency,omitempty"`
+	PaymentAddress string   `json:"payment_address"`
+
+	ReceiveAmount   *float64 `json:"receive_amount"`
+	ReceiveCurrency string   `json:"receive_currency"`
+}
+
+func newPaymentOrder(resp pilvytis.OrderResp) *PaymentOrderResp {
+	return &PaymentOrderResp{
+		ID:              resp.ID,
+		Status:          resp.Status,
+		Identity:        resp.Identity,
+		PriceAmount:     resp.PriceAmount,
+		PriceCurrency:   resp.PriceCurrency,
+		PayAmount:       resp.PayAmount,
+		PayCurrency:     resp.PayCurrency,
+		PaymentAddress:  resp.PaymentAddress,
+		ReceiveAmount:   resp.ReceiveAmount,
+		ReceiveCurrency: resp.ReceiveCurrency,
+	}
+}
+
+// CreatePaymentOrders creates a new payment order.
+func (mb *MobileNode) CreatePaymentOrder(r *CreatePaymentOrderReq) (*PaymentOrderResp, error) {
+	resp, err := mb.pilvytis.CreatePaymentOrder(
+		identity.FromAddress(r.IdentityAddress),
+		r.PriceAmount,
+		r.PriceCurrency,
+		r.ReceiveCurrency,
+		r.LightningNetwork)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not create payment request")
+	}
+
+	return newPaymentOrder(resp), nil
+}
+
+// GetPaymentOrderReq repsents a payment order get request object.
+type GetPaymentOrderReq struct {
+	IdentityAddress string
+	OrderID         uint64
+}
+
+// GetPaymentOrder returns a payment order.
+func (mb *MobileNode) GetPaymentOrder(r *GetPaymentOrderReq) (*PaymentOrderResp, error) {
+	resp, err := mb.pilvytis.GetPaymentOrder(
+		identity.FromAddress(r.IdentityAddress),
+		r.OrderID,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get a payment request")
+	}
+
+	return newPaymentOrder(resp), nil
+}
+
+// GetPaymentOrdersReq repsents a payment order get request object.
+type GetPaymentOrdersReq struct {
+	IdentityAddress string
+}
+
+// GetPaymentOrder returns an array of payment orders.
+func (mb *MobileNode) GetPaymentOrders(r *GetPaymentOrdersReq) ([]PaymentOrderResp, error) {
+	resp, err := mb.pilvytis.GetPaymentOrders(identity.FromAddress(r.IdentityAddress))
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get a payment request")
+	}
+
+	result := make([]PaymentOrderResp, len(resp))
+	for i, v := range resp {
+		result[i] = *newPaymentOrder(v)
+	}
+	return result, nil
 }
 
 // GetIdentityRegistrationFeesResponse represents identity registration fees result.
